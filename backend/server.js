@@ -25,6 +25,14 @@ app.use((err, req, res, next) => {
     });
 });
 
+app.get('/', (req, res) => {
+    res.send('API is running...');
+});
+
 const port = process.env.PORT || 5000;
 
-app.listen(port, () => console.log(`Server started on port ${port}`));
+if (require.main === module) {
+    app.listen(port, () => console.log(`Server started on port ${port}`));
+}
+
+module.exports = app;
