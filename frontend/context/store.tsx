@@ -9,6 +9,7 @@ export type FileType = "file" | "folder" | "canvas";
 
 export interface FileSystemItem {
   id: string;
+  _id?: string;
   name: string;
   type: FileType;
   parentId: string | null;
@@ -201,7 +202,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         const swapIdRecursive = (items: FileSystemItem[]): FileSystemItem[] => {
           return items.map(item => {
             if (item.id === tempId) {
-              return { ...item, id: realId, ...createdFile, children: item.children }; // Merge full response but keep children/structure
+              return { ...item, ...createdFile, id: realId, children: item.children }; // Merge full response but keep children/structure
             }
             if (item.children) {
               return { ...item, children: swapIdRecursive(item.children) };
