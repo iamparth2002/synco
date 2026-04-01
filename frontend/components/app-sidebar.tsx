@@ -2,14 +2,10 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import {
-  Bot,
   FileText,
   Folder,
-  MoreHorizontal,
-  Settings2,
-  Layers,
   Map,
   Search,
   FilePlus,
@@ -17,8 +13,24 @@ import {
   ChevronRight,
   Trash2,
   Edit2,
-  Loader2
+  Loader2,
+  MoreVertical,
+  LogOut
 } from "lucide-react"
+
+// Custom Synco icon matching the favicon
+const SyncoIcon = ({ className }: { className?: string }) => (
+  <svg
+    viewBox="0 0 64 64"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    className={className}
+  >
+    <circle cx="32" cy="32" r="22" fill="none" stroke="currentColor" strokeWidth="2"/>
+    <circle cx="32" cy="32" r="16" fill="none" stroke="currentColor" strokeWidth="2"/>
+    <circle cx="32" cy="32" r="10" fill="none" stroke="currentColor" strokeWidth="2"/>
+  </svg>
+)
 
 import {
   Sidebar,
@@ -32,12 +44,12 @@ import {
   SidebarGroup,
   SidebarGroupLabel,
   SidebarGroupContent,
+  useSidebar,
 } from "@/components/ui/sidebar"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
@@ -45,12 +57,17 @@ import { Input } from "@/components/ui/input"
 import { useStore, FileSystemItem } from "@/context/store"
 import { useAuth } from "@/context/auth-context"
 import { Button } from "@/components/ui/button"
+import { cn } from "@/lib/utils"
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const currentFileId = searchParams.get("id");
   const { files, searchQuery, setSearchQuery, createItem, deleteItem, renameItem, moveItem, duplicateItem, isLoading, expandedFolders, toggleFolder } = useStore();
   const { logout, user } = useAuth();
+  const { isMobile, setOpenMobile } = useSidebar();
   const [editingId, setEditingId] = React.useState<string | null>(null);
+  const searchInputRef = React.useRef<HTMLInputElement>(null);
 
   // Filter files based on search query
   const filterFiles = (items: FileSystemItem[]): FileSystemItem[] => {
@@ -76,7 +93,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const handleCreate = async (type: "file" | "folder" | "canvas") => {
     const defaultName = type === "folder" ? "New Folder" : (type === "canvas" ? "New Canvas" : "New Note");
     const id = await createItem(type, defaultName, "root");
-    setEditingId(id);
 
     // Navigate to the new item
     if (type === "canvas") {
@@ -94,8 +110,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
               <Link href="/dashboard">
-                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                  <Layers className="size-4" />
+                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-black text-white">
+                  <SyncoIcon className="size-4" />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-semibold">Synco</span>
@@ -110,10 +126,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <div className="relative">
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
+              ref={searchInputRef}
               placeholder="Search..."
               className="pl-8 h-9 bg-sidebar-accent/50 border-sidebar-border"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              onFocus={(e) => {
+                // Prevent auto-focus on mobile when sidebar opens
+                if (isMobile && !searchQuery) {
+                  e.target.blur();
+                }
+              }}
             />
           </div>
         </div>
@@ -153,6 +176,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     onDuplicate={duplicateItem}
                     expandedFolders={expandedFolders}
                     toggleFolder={toggleFolder}
+                    isMobile={isMobile}
+                    setOpenMobile={setOpenMobile}
+                    currentFileId={currentFileId}
                   />
                 ))}
               </SidebarMenu>
@@ -163,40 +189,24 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <SidebarMenuButton
-                  size="lg"
-                  className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
-                >
-                  <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                    <Bot className="size-4" />
-                  </div>
-                  <div className="grid flex-1 text-left text-sm leading-tight">
-                    <span className="truncate font-semibold">{user?.name || "User"}</span>
-                    <span className="truncate text-xs">{user?.email || "user@example.com"}</span>
-                  </div>
-                  <MoreHorizontal className="ml-auto size-4" />
-                </SidebarMenuButton>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
-                side="bottom"
-                align="end"
-                sideOffset={4}
+            <div className="flex items-center gap-2 px-2 py-2">
+              <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-black text-white shrink-0">
+                <SyncoIcon className="size-4" />
+              </div>
+              <div className="grid flex-1 text-left text-sm leading-tight min-w-0">
+                <span className="truncate font-semibold">{user?.name || "User"}</span>
+                <span className="truncate text-xs text-muted-foreground">{user?.email || "user@example.com"}</span>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={logout}
+                className="h-8 w-8 shrink-0"
+                title="Logout"
               >
-                <DropdownMenuItem asChild>
-                  <Link href="/dashboard/settings">
-                    <Settings2 className="mr-2 size-4" />
-                    Settings
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={logout} className="cursor-pointer">
-                  Log out
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                <LogOut className="h-4 w-4" />
+              </Button>
+            </div>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
@@ -214,13 +224,21 @@ interface FileTreeItemProps {
   onDuplicate: (id: string) => void;
   expandedFolders: Record<string, boolean>;
   toggleFolder: (id: string) => void;
+  isMobile: boolean;
+  setOpenMobile: (open: boolean) => void;
+  currentFileId: string | null;
 }
 
-function FileTreeItem({ item, editingId, setEditingId, onRename, onDelete, onMove, onDuplicate, expandedFolders, toggleFolder }: FileTreeItemProps) {
+function FileTreeItem({ item, editingId, setEditingId, onRename, onDelete, onMove, onDuplicate, expandedFolders, toggleFolder, isMobile, setOpenMobile, currentFileId }: FileTreeItemProps) {
   const Icon = item.type === "folder" ? Folder : (item.type === "canvas" ? Map : FileText);
   const href = item.type === "canvas" ? `/dashboard/canvas?id=${item.id}` : `/dashboard?id=${item.id}`;
   const isEditing = editingId === item.id;
+  const isActive = currentFileId === item.id;
   const [tempName, setTempName] = React.useState(item.name);
+  const [isDragging, setIsDragging] = React.useState(false);
+  const [isDropTarget, setIsDropTarget] = React.useState(false);
+  const touchStartPos = React.useRef<{ x: number; y: number } | null>(null);
+  const draggedItemId = React.useRef<string | null>(null);
 
   const handleBlur = () => {
     if (tempName.trim() === "") {
@@ -237,55 +255,178 @@ function FileTreeItem({ item, editingId, setEditingId, onRename, onDelete, onMov
     }
   };
 
+  // Desktop drag and drop
   const handleDragStart = (e: React.DragEvent) => {
     e.dataTransfer.setData("text/plain", item.id);
     e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragEnd = () => {
+    setIsDragging(false);
   };
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    if (item.type === "folder") {
+      setIsDropTarget(true);
+    }
+  };
+
+  const handleDragLeave = () => {
+    setIsDropTarget(false);
   };
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    setIsDropTarget(false);
     const draggedId = e.dataTransfer.getData("text/plain");
     if (draggedId !== item.id && item.type === "folder") {
       onMove(draggedId, item.id);
     }
   };
 
+  // Mobile touch drag and drop
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    touchStartPos.current = { x: touch.clientX, y: touch.clientY };
+    draggedItemId.current = item.id;
+
+    // Add a small delay to distinguish from scrolling
+    setTimeout(() => {
+      if (draggedItemId.current === item.id) {
+        setIsDragging(true);
+      }
+    }, 200);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isDragging || !touchStartPos.current) return;
+
+    const touch = e.touches[0];
+    const elementAtPoint = document.elementFromPoint(touch.clientX, touch.clientY);
+
+    // Find if we're over a folder
+    const folderElement = elementAtPoint?.closest('[data-folder-id]');
+    if (folderElement) {
+      const folderId = folderElement.getAttribute('data-folder-id');
+      if (folderId && folderId !== item.id) {
+        // Set drop target highlight
+        document.querySelectorAll('[data-folder-id]').forEach(el => {
+          el.classList.remove('bg-accent');
+        });
+        folderElement.classList.add('bg-accent');
+      }
+    }
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (!isDragging || !draggedItemId.current) {
+      touchStartPos.current = null;
+      draggedItemId.current = null;
+      return;
+    }
+
+    const touch = e.changedTouches[0];
+    const elementAtPoint = document.elementFromPoint(touch.clientX, touch.clientY);
+    const folderElement = elementAtPoint?.closest('[data-folder-id]');
+
+    if (folderElement) {
+      const targetFolderId = folderElement.getAttribute('data-folder-id');
+      if (targetFolderId && targetFolderId !== draggedItemId.current) {
+        onMove(draggedItemId.current, targetFolderId);
+      }
+    }
+
+    // Cleanup
+    document.querySelectorAll('[data-folder-id]').forEach(el => {
+      el.classList.remove('bg-accent');
+    });
+
+    setIsDragging(false);
+    setIsDropTarget(false);
+    touchStartPos.current = null;
+    draggedItemId.current = null;
+  };
+
   const ActionButtons = () => (
-    <div className="absolute right-1 top-1/2 -translate-y-1/2 z-10 flex items-center gap-0.5 opacity-0 group-hover/row:opacity-100 transition-opacity bg-sidebar/80 backdrop-blur-sm rounded-md">
-      <Button
-        variant="ghost"
-        size="icon"
-        className="h-6 w-6"
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          setTempName(item.name);
-          setEditingId(item.id);
-        }}
-        title="Rename"
-      >
-        <Edit2 className="h-3 w-3" />
-      </Button>
-      <Button
-        variant="ghost"
-        size="icon"
-        className="h-6 w-6 text-destructive hover:text-destructive"
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          onDelete(item.id);
-        }}
-        title="Delete"
-      >
-        <Trash2 className="h-3 w-3" />
-      </Button>
-    </div>
+    <>
+      {/* Mobile - Always visible three-dot menu */}
+      <div className="absolute right-1 top-1/2 -translate-y-1/2 z-10 md:hidden">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+              }}
+            >
+              <MoreVertical className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setTempName(item.name);
+                setEditingId(item.id);
+              }}
+            >
+              <Edit2 className="h-4 w-4 mr-2" />
+              Rename
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onDelete(item.id);
+              }}
+              className="text-destructive focus:text-destructive"
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Delete
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
+      {/* Desktop - Hover buttons */}
+      <div className="absolute right-1 top-1/2 -translate-y-1/2 z-10 hidden md:flex items-center gap-0.5 opacity-0 group-hover/row:opacity-100 transition-opacity bg-sidebar/80 backdrop-blur-sm rounded-md">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-6 w-6"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setTempName(item.name);
+            setEditingId(item.id);
+          }}
+          title="Rename"
+        >
+          <Edit2 className="h-3 w-3" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-6 w-6 text-destructive hover:text-destructive"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onDelete(item.id);
+          }}
+          title="Delete"
+        >
+          <Trash2 className="h-3 w-3" />
+        </Button>
+      </div>
+    </>
   );
 
   if (item.type === "folder") {
@@ -299,11 +440,21 @@ function FileTreeItem({ item, editingId, setEditingId, onRename, onDelete, onMov
       >
         <SidebarMenuItem>
           <div
-            className="group/row relative flex items-center w-full"
+            className={cn(
+              "group/row relative flex items-center w-full transition-colors",
+              isDragging && "opacity-50",
+              isDropTarget && "bg-accent"
+            )}
+            data-folder-id={item.id}
             draggable
             onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
             onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
             onDrop={handleDrop}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
           >
             <CollapsibleTrigger asChild>
               <SidebarMenuButton tooltip={item.name} className="pr-14">
@@ -342,6 +493,9 @@ function FileTreeItem({ item, editingId, setEditingId, onRename, onDelete, onMov
                   onDuplicate={onDuplicate}
                   expandedFolders={expandedFolders}
                   toggleFolder={toggleFolder}
+                  isMobile={isMobile}
+                  setOpenMobile={setOpenMobile}
+                  currentFileId={currentFileId}
                 />
               ))}
             </SidebarMenuSub>
@@ -354,11 +508,18 @@ function FileTreeItem({ item, editingId, setEditingId, onRename, onDelete, onMov
   return (
     <SidebarMenuItem>
       <div
-        className="group/row relative flex items-center w-full"
+        className={cn(
+          "group/row relative flex items-center w-full transition-colors",
+          isDragging && "opacity-50"
+        )}
         draggable
         onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
       >
-        <SidebarMenuButton asChild tooltip={item.name} className="pr-14 pl-8">
+        <SidebarMenuButton asChild tooltip={item.name} className="pr-14 pl-2" isActive={isActive}>
           {isEditing ? (
             <div className="flex items-center gap-2 w-full">
               <Icon className="h-4 w-4 shrink-0" />
@@ -372,7 +533,15 @@ function FileTreeItem({ item, editingId, setEditingId, onRename, onDelete, onMov
               />
             </div>
           ) : (
-            <Link href={href} className="flex items-center gap-2 w-full">
+            <Link
+              href={href}
+              className="flex items-center gap-2 w-full"
+              onClick={() => {
+                if (isMobile) {
+                  setOpenMobile(false);
+                }
+              }}
+            >
               <Icon className="h-4 w-4 shrink-0" />
               <span className="truncate flex-1">{item.name}</span>
             </Link>

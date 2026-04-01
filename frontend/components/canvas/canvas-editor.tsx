@@ -15,7 +15,7 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { Button } from "@/components/ui/button";
-import { Square, Circle, Type } from "lucide-react";
+import { Square, Circle, Type, Triangle, Diamond, Hexagon } from "lucide-react";
 import { useStore } from '@/context/store';
 import { ShapeNode } from './custom-node';
 import { fileService } from "@/lib/services/fileService";
@@ -81,7 +81,7 @@ export function CanvasEditor({ fileId }: { fileId: string }) {
         [setEdges],
     );
 
-    const addNode = (type: 'rectangle' | 'circle' | 'text') => {
+    const addNode = (type: 'rectangle' | 'circle' | 'text' | 'triangle' | 'diamond' | 'hexagon') => {
         const newNode = {
             id: Math.random().toString(36).substr(2, 9),
             position: {
@@ -92,7 +92,7 @@ export function CanvasEditor({ fileId }: { fileId: string }) {
             data: {
                 shapeType: type,
                 label: type === 'text' ? 'Text' : '',
-                color: type === 'text' ? 'transparent' : '#27272a' // Default dark gray
+                color: type === 'text' ? 'transparent' : '#27272a', // Default dark gray
             },
             style: {
                 width: type === 'text' ? 100 : 150,
@@ -111,11 +111,16 @@ export function CanvasEditor({ fileId }: { fileId: string }) {
                 onEdgesChange={onEdgesChange}
                 onConnect={onConnect}
                 nodeTypes={nodeTypes}
-                fitView
+                fitView={nodes.length > 0}
                 colorMode="dark"
                 minZoom={0.1}
                 maxZoom={4}
-                defaultViewport={{ x: 0, y: 0, zoom: 1 }}
+                defaultViewport={{ x: 0, y: 0, zoom: 0.8 }}
+                fitViewOptions={{
+                    padding: 0.3,
+                    minZoom: 0.5,
+                    maxZoom: 1,
+                }}
                 defaultEdgeOptions={{
                     style: { strokeWidth: 3, stroke: '#71717a' },
                     type: 'default',
@@ -124,34 +129,61 @@ export function CanvasEditor({ fileId }: { fileId: string }) {
             >
                 <Background variant={BackgroundVariant.Dots} gap={20} size={2} color="#555" />
 
-                <Panel position="bottom-center" className="mb-8">
-                    <div className="bg-background/80 backdrop-blur-md p-2 rounded-full border border-border flex gap-2 shadow-2xl">
+                <Panel position="bottom-center" className="mb-4 md:mb-8">
+                    <div className="bg-background/90 backdrop-blur-md p-1.5 md:p-2 rounded-2xl border border-border flex flex-wrap gap-1.5 md:gap-2 shadow-2xl max-w-[95vw] md:max-w-md justify-center">
                         <Button
                             variant="ghost"
                             size="icon"
                             onClick={() => addNode('rectangle')}
                             title="Add Rectangle"
-                            className="hover:bg-muted rounded-full w-10 h-10"
+                            className="hover:bg-muted rounded-lg w-9 h-9 md:w-10 md:h-10 touch-manipulation"
                         >
-                            <Square className="w-5 h-5" />
+                            <Square className="w-4 h-4 md:w-5 md:h-5" />
                         </Button>
                         <Button
                             variant="ghost"
                             size="icon"
                             onClick={() => addNode('circle')}
                             title="Add Circle"
-                            className="hover:bg-muted rounded-full w-10 h-10"
+                            className="hover:bg-muted rounded-lg w-9 h-9 md:w-10 md:h-10 touch-manipulation"
                         >
-                            <Circle className="w-5 h-5" />
+                            <Circle className="w-4 h-4 md:w-5 md:h-5" />
+                        </Button>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => addNode('triangle')}
+                            title="Add Triangle"
+                            className="hover:bg-muted rounded-lg w-9 h-9 md:w-10 md:h-10 touch-manipulation"
+                        >
+                            <Triangle className="w-4 h-4 md:w-5 md:h-5" />
+                        </Button>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => addNode('diamond')}
+                            title="Add Diamond"
+                            className="hover:bg-muted rounded-lg w-9 h-9 md:w-10 md:h-10 touch-manipulation"
+                        >
+                            <Diamond className="w-4 h-4 md:w-5 md:h-5" />
+                        </Button>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => addNode('hexagon')}
+                            title="Add Hexagon"
+                            className="hover:bg-muted rounded-lg w-9 h-9 md:w-10 md:h-10 touch-manipulation"
+                        >
+                            <Hexagon className="w-4 h-4 md:w-5 md:h-5" />
                         </Button>
                         <Button
                             variant="ghost"
                             size="icon"
                             onClick={() => addNode('text')}
                             title="Add Text"
-                            className="hover:bg-muted rounded-full w-10 h-10"
+                            className="hover:bg-muted rounded-lg w-9 h-9 md:w-10 md:h-10 touch-manipulation"
                         >
-                            <Type className="w-5 h-5" />
+                            <Type className="w-4 h-4 md:w-5 md:h-5" />
                         </Button>
                     </div>
                 </Panel>

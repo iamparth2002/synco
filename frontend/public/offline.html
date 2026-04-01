@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Synco - Offline</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #000000;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            text-align: center;
+            max-width: 400px;
+        }
+        .icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 24px;
+        }
+        h1 {
+            font-size: 24px;
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+        p {
+            color: #888;
+            line-height: 1.6;
+            margin-bottom: 24px;
+        }
+        .retry-btn {
+            background: #ffffff;
+            color: #000000;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        .retry-btn:hover {
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <svg class="icon" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="32" cy="32" r="22" fill="none" stroke="#ffffff" stroke-width="2"/>
+            <circle cx="32" cy="32" r="16" fill="none" stroke="#ffffff" stroke-width="2"/>
+            <circle cx="32" cy="32" r="10" fill="none" stroke="#ffffff" stroke-width="2"/>
+        </svg>
+        <h1>You're Offline</h1>
+        <p>Synco needs an internet connection to sync your notes and canvas. Please check your connection and try again.</p>
+        <button class="retry-btn" onclick="window.location.reload()">
+            Retry Connection
+        </button>
+    </div>
+</body>
+</html>

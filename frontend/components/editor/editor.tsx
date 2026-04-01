@@ -7,20 +7,19 @@ import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
 import { AutoFocusPlugin } from "@lexical/react/LexicalAutoFocusPlugin";
 import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
 import { HeadingNode, QuoteNode } from "@lexical/rich-text";
-import { TableCellNode, TableNode, TableRowNode } from "@lexical/table";
 import { ListItemNode, ListNode } from "@lexical/list";
 import { CodeHighlightNode, CodeNode } from "@lexical/code";
 import { AutoLinkNode, LinkNode } from "@lexical/link";
 import { LinkPlugin } from "@lexical/react/LexicalLinkPlugin";
 import { ListPlugin } from "@lexical/react/LexicalListPlugin";
 import { CheckListPlugin } from "@lexical/react/LexicalCheckListPlugin";
-import { TablePlugin } from "@lexical/react/LexicalTablePlugin";
 import { MarkdownShortcutPlugin } from "@lexical/react/LexicalMarkdownShortcutPlugin";
 import { AutoLinkPlugin } from "@lexical/react/LexicalAutoLinkPlugin";
 import { TRANSFORMERS } from "@lexical/markdown";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { $getRoot, $createParagraphNode, $createTextNode, BLUR_COMMAND } from "lexical";
 import { useEffect, useState, useRef } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 import theme from "./theme";
 import ToolbarPlugin from "./plugins/ToolbarPlugin";
@@ -126,9 +125,6 @@ const editorConfig = {
     QuoteNode,
     CodeNode,
     CodeHighlightNode,
-    TableNode,
-    TableCellNode,
-    TableRowNode,
     AutoLinkNode,
     LinkNode,
     ImageNode
@@ -138,6 +134,7 @@ const editorConfig = {
 export default function Editor({ fileId }: { fileId: string }) {
   const [isLoading, setIsLoading] = useState(true);
   const { updateItemContent, isLoading: storeLoading, setSaveStatus } = useStore();
+  const isMobile = useIsMobile();
 
 
 
@@ -189,12 +186,11 @@ export default function Editor({ fileId }: { fileId: string }) {
             ErrorBoundary={LexicalErrorBoundary}
           />
           <HistoryPlugin />
-          <AutoFocusPlugin />
+          {!isMobile && <AutoFocusPlugin />}
           <ListPlugin />
           <CheckListPlugin />
           <LinkPlugin />
           <AutoLinkPlugin matchers={MATCHERS} />
-          <TablePlugin />
           <ImagesPlugin />
           <MarkdownShortcutPlugin transformers={TRANSFORMERS} />
           <BlurAutoSavePlugin />

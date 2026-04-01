@@ -2,7 +2,7 @@
 
 import React, { memo, useState, useEffect, useRef } from 'react';
 import { Handle, Position, NodeResizer, NodeToolbar, useReactFlow } from '@xyflow/react';
-import { Trash2, Palette, Copy, ScanLine, Type } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -16,8 +16,24 @@ const colors = [
   { name: 'Purple', value: '#a855f7' },
   { name: 'Pink', value: '#ec4899' },
   { name: 'Gray', value: '#27272a' },
+  { name: 'White', value: '#ffffff' },
+  { name: 'Black', value: '#000000' },
   { name: 'Transparent', value: 'transparent' },
 ];
+
+// SVG path definitions for different shapes
+const getShapePath = (type: string) => {
+  switch (type) {
+    case 'triangle':
+      return 'M 50 5 L 95 95 L 5 95 Z';
+    case 'diamond':
+      return 'M 50 5 L 95 50 L 50 95 L 5 50 Z';
+    case 'hexagon':
+      return 'M 25 5 L 75 5 L 95 50 L 75 95 L 25 95 L 5 50 Z';
+    default:
+      return '';
+  }
+};
 
 export const ShapeNode = memo(({ data, id, selected }: any) => {
   const { setNodes } = useReactFlow();
@@ -27,7 +43,7 @@ export const ShapeNode = memo(({ data, id, selected }: any) => {
   // Sync local state with data
   const [text, setText] = useState(data.label || '');
   const [color, setColor] = useState(data.color || 'transparent');
-  const shapeType = data.shapeType || 'rectangle'; // 'rectangle', 'circle', 'text'
+  const shapeType = data.shapeType || 'rectangle'; // 'rectangle', 'circle', 'text', 'triangle', 'diamond', 'hexagon'
 
   useEffect(() => {
     setText(data.label || '');
@@ -73,73 +89,106 @@ export const ShapeNode = memo(({ data, id, selected }: any) => {
 
   return (
     <>
-      <NodeResizer 
-        color="#a1a1aa" 
-        isVisible={selected} 
-        minWidth={100} 
-        minHeight={50} 
-        handleStyle={{ width: 8, height: 8, borderRadius: 4 }}
+      <NodeResizer
+        color="#a1a1aa"
+        isVisible={selected}
+        minWidth={80}
+        minHeight={40}
+        handleStyle={{
+          width: 10,
+          height: 10,
+          borderRadius: 4
+        }}
       />
       
-      <NodeToolbar 
-        isVisible={selected} 
+      <NodeToolbar
+        isVisible={selected}
         position={Position.Top}
-        offset={20}
-        className="flex items-center gap-1 bg-background/90 backdrop-blur-md border rounded-lg p-1 shadow-xl"
+        offset={10}
+        className="flex items-center gap-0.5 md:gap-1 bg-background/95 backdrop-blur-md border rounded-md md:rounded-lg p-1 md:p-1.5 shadow-xl max-w-[90vw] overflow-x-auto"
       >
-        <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-muted" onClick={handleDelete}>
-          <Trash2 className="h-4 w-4" />
+        <Button variant="ghost" size="icon" className="h-6 w-6 md:h-8 md:w-8 hover:bg-muted touch-manipulation shrink-0" onClick={handleDelete} title="Delete">
+          <Trash2 className="h-3 w-3 md:h-4 md:w-4" />
         </Button>
-        <div className="h-4 w-px bg-border mx-1" />
-        <div className="flex gap-1 px-1">
+        <div className="h-3 md:h-4 w-px bg-border mx-0.5 md:mx-1 shrink-0" />
+        <div className="flex gap-0.5 md:gap-1">
             {colors.map((c) => (
                 <button
                     key={c.value}
                     className={cn(
-                        "w-4 h-4 rounded-full border border-border transition-transform hover:scale-110",
-                        color === c.value && "ring-2 ring-primary ring-offset-2 ring-offset-background"
+                        "w-3.5 h-3.5 md:w-5 md:h-5 rounded-sm md:rounded-md border transition-all active:scale-95 md:hover:scale-110 shrink-0",
+                        color === c.value ? "border-primary ring-1 md:ring-2 ring-primary/30" : "border-border"
                     )}
-                    style={{ backgroundColor: c.value === 'transparent' ? 'transparent' : c.value }}
+                    style={{
+                      backgroundColor: c.value === 'transparent' ? 'transparent' : c.value,
+                      backgroundImage: c.value === 'transparent' ? 'linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%), linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%)' : 'none',
+                      backgroundSize: '5px 5px',
+                      backgroundPosition: '0 0, 2.5px 2.5px'
+                    }}
                     onClick={() => handleColorChange(c.value)}
                     title={c.name}
-                >
-                    {c.value === 'transparent' && <div className="w-full h-full border border-red-500 rotate-45 transform origin-center scale-x-0" />}
-                </button>
+                />
             ))}
         </div>
       </NodeToolbar>
 
       <div className="w-full h-full relative group">
         {/* Visual Shape Layer */}
-        <div 
-            className={cn(
-                "absolute inset-0 transition-colors duration-200 flex items-center justify-center overflow-hidden",
-                shapeType === 'circle' ? "rounded-full" : "rounded-xl",
-                isTextNode ? "border-none bg-transparent" : "border-2 border-transparent",
-                !isTextNode && "shadow-sm"
-            )}
-            style={{ 
-                backgroundColor: isTextNode ? 'transparent' : (color === 'transparent' ? 'rgba(39, 39, 42, 0.5)' : color),
-                borderColor: selected ? 'var(--ring)' : 'transparent'
-            }}
+        <div
+            className="absolute inset-0 transition-all duration-200 flex items-center justify-center overflow-visible"
             onDoubleClick={handleDoubleClick}
         >
-            <textarea
-                ref={textareaRef}
-                value={text}
-                onChange={handleTextChange}
-                onBlur={handleBlur}
-                className={cn(
-                    "w-full h-full bg-transparent resize-none border-none focus:outline-none text-center p-4 font-medium text-foreground/90 placeholder:text-muted-foreground/50 overflow-hidden",
-                    "pointer-events-none", // Disable pointer events when not editing to allow dragging
-                    isEditing && "pointer-events-auto"
-                )}
-                placeholder="Type something..."
-                style={{
-                    fontSize: '1rem',
-                    lineHeight: '1.5',
-                }}
-            />
+            {/* SVG-based shapes */}
+            {!isTextNode && ['triangle', 'diamond', 'hexagon'].includes(shapeType) && (
+                <svg
+                    className="absolute inset-0 w-full h-full"
+                    viewBox="0 0 100 100"
+                    preserveAspectRatio="none"
+                >
+                    <path
+                        d={getShapePath(shapeType)}
+                        fill={color === 'transparent' ? 'rgba(39, 39, 42, 0.5)' : color}
+                        stroke={selected ? 'var(--ring)' : color === 'transparent' ? '#71717a' : color}
+                        strokeWidth={2}
+                    />
+                </svg>
+            )}
+
+            {/* Circle and Rectangle - regular divs */}
+            {!isTextNode && (shapeType === 'circle' || shapeType === 'rectangle') && (
+                <div
+                    className={cn(
+                        "absolute inset-0 transition-all duration-200",
+                        shapeType === 'circle' ? "rounded-full" : "rounded-xl"
+                    )}
+                    style={{
+                        backgroundColor: color === 'transparent' ? 'rgba(39, 39, 42, 0.5)' : color,
+                        border: `2px solid ${selected ? 'var(--ring)' : (color === 'transparent' ? '#71717a' : color)}`,
+                    }}
+                />
+            )}
+
+            {/* Text overlay - always centered */}
+            <div className="absolute inset-0 flex items-center justify-center z-10 p-4">
+                <textarea
+                    ref={textareaRef}
+                    value={text}
+                    onChange={handleTextChange}
+                    onBlur={handleBlur}
+                    className={cn(
+                        "w-full bg-transparent resize-none border-none focus:outline-none text-center font-medium text-foreground/90 placeholder:text-muted-foreground/50 overflow-hidden",
+                        "pointer-events-none",
+                        isEditing && "pointer-events-auto"
+                    )}
+                    placeholder="Type something..."
+                    style={{
+                        fontSize: '1rem',
+                        lineHeight: '1.5',
+                        textAlign: 'center',
+                        maxHeight: '100%',
+                    }}
+                />
+            </div>
         </div>
 
         {/* Handles Layer - Outside overflow hidden */}

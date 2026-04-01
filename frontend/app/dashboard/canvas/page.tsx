@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { useStore } from "@/context/store";
 import { Suspense } from "react";
 import { Loader2 } from "lucide-react";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 import { SaveStatusIndicator } from "@/components/save-status-indicator";
 
 function CanvasContent() {
@@ -24,9 +25,12 @@ function CanvasContent() {
 
   return (
     <div className="flex-1 h-full flex flex-col">
-      <header className="flex items-center justify-between h-14 px-6 border-b shrink-0 bg-background">
-        <h1 className="text-lg font-semibold">{file ? file.name : "Canvas"}</h1>
-        <SaveStatusIndicator />
+      <header className="flex items-center gap-2 md:gap-3 h-14 px-3 md:px-6 border-b shrink-0 bg-background">
+        <SidebarTrigger className="md:hidden shrink-0" />
+        <h1 className="text-base md:text-lg font-semibold flex-1 truncate min-w-0">{file ? file.name : "Canvas"}</h1>
+        <div className="shrink-0">
+          <SaveStatusIndicator />
+        </div>
       </header>
       <div className="flex-1 overflow-hidden">
         {fileId ? (

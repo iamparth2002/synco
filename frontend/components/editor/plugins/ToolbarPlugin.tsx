@@ -5,23 +5,15 @@ import { mergeRegister } from "@lexical/utils";
 import {
   $getSelection,
   $isRangeSelection,
-  CAN_REDO_COMMAND,
-  CAN_UNDO_COMMAND,
   FORMAT_ELEMENT_COMMAND,
   FORMAT_TEXT_COMMAND,
-  REDO_COMMAND,
   SELECTION_CHANGE_COMMAND,
-  UNDO_COMMAND,
   $createParagraphNode,
 } from "lexical";
-import { 
-    INSERT_TABLE_COMMAND 
-} from "@lexical/table";
 import {
     INSERT_ORDERED_LIST_COMMAND,
     INSERT_UNORDERED_LIST_COMMAND,
     INSERT_CHECK_LIST_COMMAND,
-    REMOVE_LIST_COMMAND,
 } from "@lexical/list";
 import {
     $createHeadingNode,
@@ -44,10 +36,7 @@ import {
   AlignCenter,
   AlignRight,
   AlignJustify,
-  Undo,
-  Redo,
   Image as ImageIcon,
-  Table as TableIcon,
   Heading1,
   Heading2,
   Heading3,
@@ -57,7 +46,6 @@ import {
   Quote,
   Code,
   Link as LinkIcon,
-  Type,
 } from "lucide-react";
 import { Toggle } from "@/components/ui/toggle";
 import { Button } from "@/components/ui/button";
@@ -69,8 +57,6 @@ const LowPriority = 1;
 export default function ToolbarPlugin() {
   const [editor] = useLexicalComposerContext();
   const toolbarRef = useRef(null);
-  const [canUndo, setCanUndo] = useState(false);
-  const [canRedo, setCanRedo] = useState(false);
   const [isBold, setIsBold] = useState(false);
   const [isItalic, setIsItalic] = useState(false);
   const [isUnderline, setIsUnderline] = useState(false);
@@ -131,22 +117,6 @@ export default function ToolbarPlugin() {
           return false;
         },
         LowPriority
-      ),
-      editor.registerCommand(
-        CAN_UNDO_COMMAND,
-        (payload) => {
-          setCanUndo(payload);
-          return false;
-        },
-        LowPriority
-      ),
-      editor.registerCommand(
-        CAN_REDO_COMMAND,
-        (payload) => {
-          setCanRedo(payload);
-          return false;
-        },
-        LowPriority
       )
     );
   }, [editor, updateToolbar]);
@@ -161,13 +131,6 @@ export default function ToolbarPlugin() {
       }
   };
 
-  const insertTable = () => {
-      editor.dispatchCommand(INSERT_TABLE_COMMAND, {
-          columns: "3",
-          rows: "3",
-          includeHeaders: true,
-      });
-  };
 
   const insertLink = () => {
       if (!isLink) {
@@ -235,111 +198,85 @@ export default function ToolbarPlugin() {
   };
 
   return (
-    <div className="toolbar flex flex-nowrap items-center gap-1 p-2 border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 z-20 overflow-x-auto w-full [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] *:shrink-0" ref={toolbarRef}>
-      <Button
-        variant="ghost"
-        size="icon"
-        disabled={!canUndo}
-        onClick={() => {
-          editor.dispatchCommand(UNDO_COMMAND, undefined);
-        }}
-        title="Undo (Ctrl+Z)"
-      >
-        <Undo className="h-4 w-4" />
-      </Button>
-      <Button
-        variant="ghost"
-        size="icon"
-        disabled={!canRedo}
-        onClick={() => {
-          editor.dispatchCommand(REDO_COMMAND, undefined);
-        }}
-        title="Redo (Ctrl+Y)"
-      >
-        <Redo className="h-4 w-4" />
-      </Button>
-      <Separator orientation="vertical" className="h-6 mx-1" />
+    <div className="toolbar flex flex-nowrap items-center gap-1 md:gap-1.5 p-1.5 md:p-2 border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 z-20 overflow-x-auto w-full [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] *:shrink-0 touch-manipulation" ref={toolbarRef}>
       
       {/* Headings */}
-      <Toggle size="sm" pressed={blockType === "h1"} onPressedChange={() => formatHeading("h1")} title="Heading 1">
+      <Toggle size="sm" pressed={blockType === "h1"} onPressedChange={() => formatHeading("h1")} title="Heading 1" className="touch-manipulation h-9 w-9 md:h-auto md:w-auto">
         <Heading1 className="h-4 w-4" />
       </Toggle>
-      <Toggle size="sm" pressed={blockType === "h2"} onPressedChange={() => formatHeading("h2")} title="Heading 2">
+      <Toggle size="sm" pressed={blockType === "h2"} onPressedChange={() => formatHeading("h2")} title="Heading 2" className="touch-manipulation h-9 w-9 md:h-auto md:w-auto">
         <Heading2 className="h-4 w-4" />
       </Toggle>
-      <Toggle size="sm" pressed={blockType === "h3"} onPressedChange={() => formatHeading("h3")} title="Heading 3">
+      <Toggle size="sm" pressed={blockType === "h3"} onPressedChange={() => formatHeading("h3")} title="Heading 3" className="touch-manipulation h-9 w-9 md:h-auto md:w-auto">
         <Heading3 className="h-4 w-4" />
       </Toggle>
-      
-      <Separator orientation="vertical" className="h-6 mx-1" />
+
+      <Separator orientation="vertical" className="h-6 mx-0.5 md:mx-1" />
 
       {/* Formatting */}
-      <Toggle size="sm" pressed={isBold} onPressedChange={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "bold")} title="Bold (Ctrl+B)">
+      <Toggle size="sm" pressed={isBold} onPressedChange={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "bold")} title="Bold (Ctrl+B)" className="touch-manipulation h-9 w-9 md:h-auto md:w-auto">
         <Bold className="h-4 w-4" />
       </Toggle>
-      <Toggle size="sm" pressed={isItalic} onPressedChange={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "italic")} title="Italic (Ctrl+I)">
+      <Toggle size="sm" pressed={isItalic} onPressedChange={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "italic")} title="Italic (Ctrl+I)" className="touch-manipulation h-9 w-9 md:h-auto md:w-auto">
         <Italic className="h-4 w-4" />
       </Toggle>
-      <Toggle size="sm" pressed={isUnderline} onPressedChange={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "underline")} title="Underline (Ctrl+U)">
+      <Toggle size="sm" pressed={isUnderline} onPressedChange={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "underline")} title="Underline (Ctrl+U)" className="touch-manipulation h-9 w-9 md:h-auto md:w-auto">
         <Underline className="h-4 w-4" />
       </Toggle>
-      <Toggle size="sm" pressed={isStrikethrough} onPressedChange={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "strikethrough")} title="Strikethrough">
+      <Toggle size="sm" pressed={isStrikethrough} onPressedChange={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "strikethrough")} title="Strikethrough" className="touch-manipulation h-9 w-9 md:h-auto md:w-auto">
         <Strikethrough className="h-4 w-4" />
       </Toggle>
-      <Toggle size="sm" pressed={isCode} onPressedChange={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "code")} title="Inline Code">
+      <Toggle size="sm" pressed={isCode} onPressedChange={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "code")} title="Inline Code" className="touch-manipulation h-9 w-9 md:h-auto md:w-auto">
         <Code className="h-4 w-4" />
       </Toggle>
 
-      <Separator orientation="vertical" className="h-6 mx-1" />
+      <Separator orientation="vertical" className="h-6 mx-0.5 md:mx-1" />
 
       {/* Lists */}
-      <Toggle size="sm" pressed={blockType === "bullet"} onPressedChange={() => editor.dispatchCommand(INSERT_UNORDERED_LIST_COMMAND, undefined)} title="Bullet List">
+      <Toggle size="sm" pressed={blockType === "bullet"} onPressedChange={() => editor.dispatchCommand(INSERT_UNORDERED_LIST_COMMAND, undefined)} title="Bullet List" className="touch-manipulation h-9 w-9 md:h-auto md:w-auto">
         <List className="h-4 w-4" />
       </Toggle>
-      <Toggle size="sm" pressed={blockType === "number"} onPressedChange={() => editor.dispatchCommand(INSERT_ORDERED_LIST_COMMAND, undefined)} title="Numbered List">
+      <Toggle size="sm" pressed={blockType === "number"} onPressedChange={() => editor.dispatchCommand(INSERT_ORDERED_LIST_COMMAND, undefined)} title="Numbered List" className="touch-manipulation h-9 w-9 md:h-auto md:w-auto">
         <ListOrdered className="h-4 w-4" />
       </Toggle>
-      <Toggle size="sm" pressed={blockType === "check"} onPressedChange={() => editor.dispatchCommand(INSERT_CHECK_LIST_COMMAND, undefined)} title="Check List">
+      <Toggle size="sm" pressed={blockType === "check"} onPressedChange={() => editor.dispatchCommand(INSERT_CHECK_LIST_COMMAND, undefined)} title="Check List" className="touch-manipulation h-9 w-9 md:h-auto md:w-auto">
         <CheckSquare className="h-4 w-4" />
       </Toggle>
 
-      <Separator orientation="vertical" className="h-6 mx-1" />
+      <Separator orientation="vertical" className="h-6 mx-0.5 md:mx-1 hidden md:block" />
 
       {/* Blocks */}
-      <Toggle size="sm" pressed={blockType === "quote"} onPressedChange={formatQuote} title="Quote">
+      <Toggle size="sm" pressed={blockType === "quote"} onPressedChange={formatQuote} title="Quote" className="touch-manipulation h-9 w-9 md:h-auto md:w-auto">
         <Quote className="h-4 w-4" />
       </Toggle>
-      <Toggle size="sm" pressed={blockType === "code"} onPressedChange={formatCode} title="Code Block">
+      <Toggle size="sm" pressed={blockType === "code"} onPressedChange={formatCode} title="Code Block" className="touch-manipulation h-9 w-9 md:h-auto md:w-auto">
         <div className="flex items-center font-mono text-xs border rounded px-1">{'<>'}</div>
       </Toggle>
 
-      <Separator orientation="vertical" className="h-6 mx-1" />
+      <Separator orientation="vertical" className="h-6 mx-0.5 md:mx-1 hidden md:block" />
 
-      {/* Alignment */}
-      <Button variant="ghost" size="icon" onClick={() => editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, "left")} title="Align Left">
+      {/* Alignment - Hidden on mobile for space */}
+      <Button variant="ghost" size="icon" onClick={() => editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, "left")} title="Align Left" className="hidden md:flex touch-manipulation h-9 w-9 md:h-10 md:w-10">
         <AlignLeft className="h-4 w-4" />
       </Button>
-      <Button variant="ghost" size="icon" onClick={() => editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, "center")} title="Align Center">
+      <Button variant="ghost" size="icon" onClick={() => editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, "center")} title="Align Center" className="hidden md:flex touch-manipulation h-9 w-9 md:h-10 md:w-10">
         <AlignCenter className="h-4 w-4" />
       </Button>
-      <Button variant="ghost" size="icon" onClick={() => editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, "right")} title="Align Right">
+      <Button variant="ghost" size="icon" onClick={() => editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, "right")} title="Align Right" className="hidden md:flex touch-manipulation h-9 w-9 md:h-10 md:w-10">
         <AlignRight className="h-4 w-4" />
       </Button>
-      <Button variant="ghost" size="icon" onClick={() => editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, "justify")} title="Justify">
+      <Button variant="ghost" size="icon" onClick={() => editor.dispatchCommand(FORMAT_ELEMENT_COMMAND, "justify")} title="Justify" className="hidden md:flex touch-manipulation h-9 w-9 md:h-10 md:w-10">
         <AlignJustify className="h-4 w-4" />
       </Button>
 
-      <Separator orientation="vertical" className="h-6 mx-1" />
+      <Separator orientation="vertical" className="h-6 mx-0.5 md:mx-1" />
 
       {/* Inserts */}
-      <Toggle size="sm" pressed={isLink} onPressedChange={insertLink} title="Insert Link">
+      <Toggle size="sm" pressed={isLink} onPressedChange={insertLink} title="Insert Link" className="touch-manipulation h-9 w-9 md:h-auto md:w-auto">
         <LinkIcon className="h-4 w-4" />
       </Toggle>
-      <Button variant="ghost" size="icon" onClick={insertImage} title="Insert Image">
+      <Button variant="ghost" size="icon" onClick={insertImage} title="Insert Image" className="touch-manipulation h-9 w-9 md:h-10 md:w-10">
         <ImageIcon className="h-4 w-4" />
-      </Button>
-      <Button variant="ghost" size="icon" onClick={insertTable} title="Insert Table">
-        <TableIcon className="h-4 w-4" />
       </Button>
     </div>
   );
